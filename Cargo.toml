@@ -1,0 +1,9 @@
+[package]
+name = "vanity_wallet"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time", "sync"] }
+num_cpus = "1.13.1"
+sp-core = "36.1.0"
