@@ -3,38 +3,17 @@
 > **Dream** in prefixes—hunt your perfect Substrate wallet **faster than ever**.
 
 ---
-
-## ✨ Features
-
-| 🔍 Feature         | 🚀 Benefit                         |
-|:------------------:|:----------------------------------:|
-| **Multi-threaded** | Exploit every CPU core you have    |
-| **Live Stats**     | See attempts & speed in real-time  |
-| **Custom Skips**   | Ignore network headers effortlessly|
-| **Tokio-Driven**   | Async runtime for smooth UX        |
-
----
-
-## 📦 Installation
-
-```bash
-git clone https://github.com/you/vanity_wallet.git
-cd vanity_wallet
-cargo build --release
-```
-
----
-
 ## 🚀 Usage
-
 ```bash
-vanity_wallet <YOUR_PREFIX>
+./target/release/vanity_wallet <YOUR_PREFIX>
 ```
 
 Example:
-
 ```bash
-vanity_wallet ART
+cargo build --release
+```
+```bash
+./target/release/vanity_wallet ART
 ```
 
 > **Output**  
@@ -45,7 +24,8 @@ vanity_wallet ART
 > Mnemonic: excess grace odor ...
 > ```
 
-I914900Ks:
+## 📊 Benchmarks
+**I914900Ks:**
 ```m
 ┌────────┬──────────────┬──────────────────┐
 │ Prefix │ Combinations │ Time @ 1.49 M/sec │
