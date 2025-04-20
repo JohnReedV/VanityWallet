@@ -1,20 +1,20 @@
 use num_cpus;
+use getrandom::fill;
+use bip39::Mnemonic;
 use sp_core::{Pair as PairTrait, crypto::Ss58Codec, sr25519::Pair};
 use std::{
     env,
     io::Write,
-    sync::{
-        Arc,
-        atomic::{AtomicU64, Ordering},
-    },
+    sync::{Arc, atomic::{AtomicU64, Ordering}},
     time::Instant,
 };
 use tokio::sync::mpsc;
+use tokio::task::spawn_blocking;
 
 #[tokio::main(flavor = "multi_thread")]
 async fn main() {
     let mut args = env::args();
-    let _ = args.next();
+    args.next();
     let prefix = args.next().unwrap_or_else(|| {
         eprintln!("Usage: vanity_wallet <prefix>");
         std::process::exit(1);
@@ -36,15 +36,18 @@ async fn main() {
         let counter = Arc::clone(&counter);
         let tx = tx.clone();
 
-        tokio::task::spawn_blocking(move || {
+        spawn_blocking(move || {
+            let mut seed = [0u8; 32];
             loop {
                 counter.fetch_add(1, Ordering::Relaxed);
 
-                let (pair, phrase, _seed): (Pair, String, <Pair as PairTrait>::Seed) =
-                    Pair::generate_with_phrase(None);
-
+                fill(&mut seed).expect("RNG failure");
+                let pair = Pair::from_seed(&seed);
                 let addr = pair.public().to_ss58check();
                 if addr.len() > SKIP && addr[SKIP..].starts_with(&prefix) {
+                    let phrase = Mnemonic::from_entropy(&seed)
+                        .unwrap()
+                        .to_string();
                     let _ = tx.send((addr, phrase));
                     break;
                 }
@@ -59,17 +62,17 @@ async fn main() {
             Some((addr, phrase)) = rx.recv() => {
                 println!();
                 let elapsed = start.elapsed();
-                let tried = counter.load(Ordering::Relaxed);
+                let tried  = counter.load(Ordering::Relaxed);
                 println!("🎉 Found it in {:.2?} after {} tries!", elapsed, tried);
                 println!("Address:  {}", addr);
                 println!("Mnemonic: {}", phrase);
-                std::process::exit(1);
+                std::process::exit(0);
             }
 
             _ = interval.tick() => {
                 let elapsed = start.elapsed();
                 let tried = counter.load(Ordering::Relaxed);
-                let rate = (tried as f64) / elapsed.as_secs_f64().max(1e-6);
+                let rate = tried as f64 / elapsed.as_secs_f64().max(1e-6);
                 print!(
                     "\rTried {:>12} addresses | elapsed {:>6.2?} | {:>8.0} addr/sec",
                     tried, elapsed, rate
